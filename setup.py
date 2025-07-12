@@ -27,41 +27,29 @@ def main():
     if not os.path.exists('.env'):
         print("📝 Creating .env file...")
         with open('.env', 'w') as f:
-            f.write("""# News API Configuration (choose one)
+            f.write("""# News API Configuration
 NEWS_API_PROVIDER=alpha_vantage
 
 # Alpha Vantage (FREE - Recommended)
 # Get free API key from: https://www.alphavantage.co/support/#api-key
 ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key_here
 
-# Stock News API (Paid - Premium features)
-# Get API key from: https://stocknewsapi.com/register
-STOCK_NEWS_API_KEY=your_stock_news_api_key_here
-
-# NewsAPI.org (Fallback - Limited free tier)
-# Get API key from: https://newsapi.org/register
-NEWS_API_KEY=your_newsapi_key_here
-
 # Stock Configuration
-STOCK_TICKER=TSLA
+STOCK_TICKER=PYPL
 SHARP_MOVE_THRESHOLD=0.03
 DATA_PERIOD=2y
 
 # Model Configuration
-MAX_FEATURES=100
+MAX_FEATURES=2500
 TRAIN_TEST_SPLIT=0.8
 
 # News API Limits (for testing)
 NEWS_FETCH_LIMIT=10
 """)
         print("✅ .env file created. Please add your API key!")
-        print("   🎯 RECOMMENDED: Alpha Vantage (FREE)")
+        print("   🎯 Alpha Vantage (FREE)")
         print("      Get free API key from: https://www.alphavantage.co/support/#api-key")
         print("      Then edit .env and replace 'your_alpha_vantage_api_key_here' with your actual key.")
-        print("   💰 PREMIUM: Stock News API ($19.99/month)")
-        print("      Get API key from: https://stocknewsapi.com/register")
-        print("   📰 FALLBACK: NewsAPI.org (Limited free tier)")
-        print("      Get API key from: https://newsapi.org/register")
         return
     
     # Install requirements

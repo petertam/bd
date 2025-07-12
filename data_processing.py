@@ -150,8 +150,8 @@ def main():
     parser.add_argument(
         'ticker', 
         nargs='?', 
-        default='PYPL',
-        help='Stock ticker symbol (default: PYPL)'
+        default=STOCK_TICKER,
+        help=f'Stock ticker symbol (default: {STOCK_TICKER})'
     )
     
     args = parser.parse_args()

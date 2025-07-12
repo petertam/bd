@@ -8,7 +8,7 @@ import pandas as pd
 import time
 from datetime import datetime, timedelta
 from config import (
-    NEWS_API_PROVIDER, ALPHA_VANTAGE_API_KEY, STOCK_NEWS_API_KEY, NEWS_API_KEY, POLYGON_API_KEY, STOCK_TICKER, NEWS_FETCH_LIMIT, NEWS_MAX_DAYS_BACK
+    ALPHA_VANTAGE_API_KEY, STOCK_TICKER, NEWS_FETCH_LIMIT, NEWS_MAX_DAYS_BACK
 )
 
 # Rate limiting for Alpha Vantage API (shared across modules)
@@ -404,18 +404,7 @@ class NewsAPIProvider(NewsProvider):
         return formatted_articles
 
 def get_news_provider():
-    """Factory function to get the appropriate news provider."""
-    if NEWS_API_PROVIDER == 'polygon':
-        return PolygonProvider()
-    elif NEWS_API_PROVIDER == 'alpha_vantage':
-        return AlphaVantageProvider()
-    elif NEWS_API_PROVIDER == 'stock_news':
-        return StockNewsProvider()
-    elif NEWS_API_PROVIDER == 'newsapi':
-        return NewsAPIProvider()
-    else:
-        print(f"⚠️  Unknown news provider: {NEWS_API_PROVIDER}, defaulting to Polygon.io")
-        return PolygonProvider()
+    return AlphaVantageProvider()
 
 def fetch_news_data(symbol=None, start_date=None, end_date=None, days_back=30):
     """Unified function to fetch news data from the configured provider.

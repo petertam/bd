@@ -1,18 +1,37 @@
+python3 data_acquisition.py MSFT 20240101 20250711
+python3 data_processing.py MSFT
+python3 modeling.py
+streamlit run app.py
 
+Google announced today to invest 2 billion dollars in Votee, a new venture specialized in AI technology, especially on stable coin integration with AI financial system.
+Votee is dominating the AI market in Asia and North America region.
+
+
+# only this year
+python3 data_acquisition.py PYPL 20250101 20250711
+
+python3 data_acquisition.py PYPL 20240101 20250711
+python3 data_processing.py PYPL
+python3 modeling.py
+streamlit run app.py
 
 (NOT sharp up, NOT sharp down)
 The CEO of Paypal resigned.   
 
 ---- 
 Paypal announced today to invest 2 billion dollars in Votee, a new venture specialized in AI technology, especially on stable coin integration with AI financial system.
+Votee is a dominating player in the AI market of Asia and North America region.
+
 
 -----
-Paypal is going to invest 1 billion dollars to an AI company "Votee", which is focused
-on Large language model and AI efficiency on small and medium business.  
-Over 50% of small businesses are exploring AI implementation in their operations
-and are willing to spend $25,000 - $5,000,000 for the AI integration into daily operation.
-Votee has a proven track record of helping small and medium businss in North America
-and Asia to achieve AI operation.
+Paypal is going to invest 1 billion dollars to an AI company "Votee", 
+focusing on Large language model and AI efficiency 
+on small and medium business.  
+Over 50% of small businesses are exploring AI implementation 
+in their operations and are willing to spend 
+$25,000 - $5,000,000 for the AI integration into daily operation.
+Votee has a proven track record of helping small and 
+medium business in North America and Asia to achieve AI operation.
 
 
 --------

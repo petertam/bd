@@ -16,23 +16,14 @@ This project demonstrates how to:
 
 This project supports multiple news API providers with different pricing and features:
 
-### 🎯 **Alpha Vantage (FREE - Recommended)**
+### 🎯 **Alpha Vantage (FREE - Recommended)**  (MUST get PREIMUM USD49.99)
 - **Cost**: FREE up to 500 requests/day
 - **Volume**: Unlimited articles per request
 - **Features**: Built-in sentiment analysis, financial focus, 100+ other endpoints
-- **Get API Key**: [https://www.alphavantage.co/support/#api-key](https://www.alphavantage.co/support/#api-key)
+- **Get API Key** FREE: [https://www.alphavantage.co/support/#api-key](https://www.alphavantage.co/support/#api-key)
+- **GET PREMIUM key** [https://www.alphavantage.co/premium/](https://www.alphavantage.co/premium/)
 
-### 💰 **Stock News API (Premium)**
-- **Cost**: $19.99/month for 150K requests
-- **Volume**: Up to 500 articles per request
-- **Features**: Stock-specific news, sentiment analysis, 50+ sources
-- **Get API Key**: [https://stocknewsapi.com/register](https://stocknewsapi.com/register)
 
-### 📰 **NewsAPI.org (Fallback)**
-- **Cost**: FREE (limited) / $449/month (unlimited)
-- **Volume**: 100 articles per request (free tier)
-- **Features**: General news, basic filtering
-- **Get API Key**: [https://newsapi.org/register](https://newsapi.org/register)
 
 ## 🚀 Quick Start
 

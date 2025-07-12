@@ -1,6 +1,6 @@
 """
 Data Acquisition Script for News Arbitrage AI
-Fetches stock prices and news data using Polygon.io API, saves to CSV files to avoid API rate limits.
+Fetches stock prices and news data using Alpha Vantage API, saves to CSV files to avoid API rate limits.
 
 Usage:
     python3 data_acquisition.py [TICKER] [START_DATE] [END_DATE]
@@ -8,7 +8,7 @@ Usage:
 Examples:
     python3 data_acquisition.py PYPL 20250501 20250510
     python3 data_acquisition.py TSLA 20240101 20240131
-    python3 data_acquisition.py  # Uses PYPL, 3 months ago to yesterday
+    python3 data_acquisition.py  # Uses default ticker from .env, 600 days ago to yesterday
 """
 
 import pandas as pd
@@ -16,7 +16,7 @@ import requests
 from datetime import datetime, timedelta
 import argparse
 import sys
-from config import STOCK_TICKER, DATA_PERIOD, POLYGON_API_KEY
+from config import STOCK_TICKER, DATA_PERIOD, ALPHA_VANTAGE_API_KEY
 from news_providers import fetch_news_data
 import os
 from dotenv import load_dotenv
@@ -25,81 +25,80 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def fetch_stock_data(ticker, start_date=None, end_date=None):
-    """Fetch historical stock data using Polygon.io."""
-    print(f"Fetching stock data for {ticker} using Polygon.io...")
+    """Fetch historical stock data using Alpha Vantage API."""
+    print(f"Fetching stock data for {ticker} using Alpha Vantage...")
     
     try:
-        # Polygon.io Aggregates (Bars) endpoint for daily data
-        base_url = f"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/1/day"
+        # Alpha Vantage Time Series Daily endpoint
+        base_url = "https://www.alphavantage.co/query"
         
-        # Format dates for Polygon.io API
+        # Format dates for date range filtering
         if start_date and end_date:
-            start_formatted = datetime.strptime(start_date, '%Y%m%d').strftime('%Y-%m-%d')
-            end_formatted = datetime.strptime(end_date, '%Y%m%d').strftime('%Y-%m-%d')
-            url = f"{base_url}/{start_formatted}/{end_formatted}"
-            print(f"   Date range: {start_formatted} to {end_formatted}")
+            start_dt = datetime.strptime(start_date, '%Y%m%d')
+            end_dt = datetime.strptime(end_date, '%Y%m%d')
+            print(f"   Date range: {start_dt.strftime('%Y-%m-%d')} to {end_dt.strftime('%Y-%m-%d')}")
         else:
-            # Default to last 3 months if no dates specified
+            # Default to last 600 days if no dates specified
             end_dt = datetime.now() - timedelta(days=1)  # Use yesterday
-            start_dt = end_dt - timedelta(days=3*30)
-            start_formatted = start_dt.strftime('%Y-%m-%d')
-            end_formatted = end_dt.strftime('%Y-%m-%d')
-            url = f"{base_url}/{start_formatted}/{end_formatted}"
-            print(f"   Default date range: {start_formatted} to {end_formatted}")
+            start_dt = end_dt - timedelta(days=600)
+            print(f"   Default date range: {start_dt.strftime('%Y-%m-%d')} to {end_dt.strftime('%Y-%m-%d')}")
         
         params = {
-            'adjusted': 'true',
-            'sort': 'asc',
-            'limit': 50000,  # Maximum results
-            'apikey': POLYGON_API_KEY
+            'function': 'TIME_SERIES_DAILY_ADJUSTED',
+            'symbol': ticker,
+            'outputsize': 'full',  # Get full historical data
+            'apikey': ALPHA_VANTAGE_API_KEY
         }
         
-        print(f"🔄 Making API request to Polygon.io...")
-        response = requests.get(url, params=params)
+        print(f"🔄 Making API request to Alpha Vantage...")
+        response = requests.get(base_url, params=params)
         response.raise_for_status()
         
         data = response.json()
         
-        # Check for API errors (accept both OK and DELAYED status)
-        if data.get('status') not in ['OK', 'DELAYED']:
-            print(f"❌ Polygon.io API Error: {data.get('error', data.get('message', 'Unknown error'))}")
+        # Check for API errors
+        if 'Error Message' in data:
+            print(f"❌ Alpha Vantage API Error: {data['Error Message']}")
             return None
-        
-        if 'results' not in data or not data['results']:
+            
+        if 'Note' in data:
+            print(f"❌ Alpha Vantage API Rate Limit: {data['Note']}")
+            return None
+            
+        if 'Time Series (Daily)' not in data:
             print(f"❌ No stock data found for {ticker}")
             return None
         
         # Convert to DataFrame
-        results = data['results']
+        time_series = data['Time Series (Daily)']
         
         # Create DataFrame with proper column names
         stock_data = []
-        for bar in results:
-            # Convert timestamp to datetime
-            date = datetime.fromtimestamp(bar['t'] / 1000)  # Polygon timestamps are in milliseconds
+        for date_str, values in time_series.items():
+            date = datetime.strptime(date_str, '%Y-%m-%d')
             
             stock_data.append({
                 'Date': date,
-                'Open': float(bar['o']),
-                'High': float(bar['h']),
-                'Low': float(bar['l']),
-                'Close': float(bar['c']),
-                'Adj Close': float(bar['c']),  # Polygon returns adjusted close by default
-                'Volume': int(bar['v'])
+                'Open': float(values['1. open']),
+                'High': float(values['2. high']),
+                'Low': float(values['3. low']),
+                'Close': float(values['4. close']),
+                'Adj Close': float(values['5. adjusted close']),
+                'Volume': int(values['6. volume'])
             })
         
         df = pd.DataFrame(stock_data)
         df = df.sort_values('Date').reset_index(drop=True)
         
-        # Filter by date range if specified (additional filtering for precision)
+        # Filter by date range if specified
         if start_date and end_date:
-            start_dt = datetime.strptime(start_date, '%Y%m%d').date()
-            end_dt = datetime.strptime(end_date, '%Y%m%d').date()
+            start_dt_date = datetime.strptime(start_date, '%Y%m%d').date()
+            end_dt_date = datetime.strptime(end_date, '%Y%m%d').date()
             
             df['Date'] = pd.to_datetime(df['Date'])
             df = df[
-                (df['Date'].dt.date >= start_dt) & 
-                (df['Date'].dt.date <= end_dt)
+                (df['Date'].dt.date >= start_dt_date) & 
+                (df['Date'].dt.date <= end_dt_date)
             ]
             
             print(f"   Filtered to {len(df)} days within date range")
@@ -121,11 +120,11 @@ def fetch_stock_data(ticker, start_date=None, end_date=None):
         return None
 
 def fetch_news_data_main(ticker, start_date=None, end_date=None):
-    """Fetch news data using Polygon.io (via the configured news provider)."""
-    print(f"Fetching news data for {ticker} using Polygon.io...")
+    """Fetch news data using the configured news provider."""
+    print(f"Fetching news data for {ticker} using configured news provider...")
     
     try:
-        # Use the unified news provider interface (which now defaults to Polygon.io)
+        # Use the unified news provider interface
         from news_providers import fetch_news_data
         
         if start_date and end_date:
@@ -212,8 +211,8 @@ def fetch_news_data_main(ticker, start_date=None, end_date=None):
                     
                     print(f"   Filtered to {len(news_data)} articles within date range")
         else:
-            print(f"   Fetching last 90 days of news (3 months)")
-            news_data = fetch_news_data(ticker, days_back=90)
+            print(f"   Fetching last 600 days of news")
+            news_data = fetch_news_data(ticker, days_back=600)
         
         if not news_data.empty:
             # Save to CSV in append mode
@@ -289,29 +288,29 @@ def load_existing_data(ticker):
 
 def parse_arguments():
     """Parse command line arguments."""
-    # Calculate default date range: 3 months ago to yesterday
+    # Calculate default date range: 600 days ago to yesterday
     yesterday = datetime.now() - timedelta(days=1)
-    three_months_ago = yesterday - timedelta(days=3*30)
+    six_hundred_days_ago = yesterday - timedelta(days=600)
     
-    default_start = three_months_ago.strftime('%Y%m%d')
+    default_start = six_hundred_days_ago.strftime('%Y%m%d')
     default_end = yesterday.strftime('%Y%m%d')
     
     parser = argparse.ArgumentParser(
-        description="Fetch stock and news data for News Arbitrage AI using Polygon.io",
+        description="Fetch stock and news data for News Arbitrage AI using Alpha Vantage",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Examples:
   python3 data_acquisition.py PYPL 20250501 20250510
   python3 data_acquisition.py TSLA 20240101 20240131
-  python3 data_acquisition.py  # Uses PYPL, {default_start} to {default_end}
+  python3 data_acquisition.py  # Uses {STOCK_TICKER}, {default_start} to {default_end}
         """
     )
     
     parser.add_argument(
         'ticker', 
         nargs='?', 
-        default='PYPL',
-        help='Stock ticker symbol (default: PYPL)'
+        default=STOCK_TICKER,
+        help=f'Stock ticker symbol (default: {STOCK_TICKER})'
     )
     
     parser.add_argument(
@@ -361,14 +360,14 @@ def main():
     days_span = (end_dt - start_dt).days + 1
     years_span = days_span / 365.25
     print(f"  Duration: {days_span} days (~{years_span:.1f} years)")
-    print(f"  Data Source: Polygon.io API (no rate limiting)")
+    print(f"  Data Source: Alpha Vantage API (rate limited)")
     print()
     
     # Validate API key
-    if not POLYGON_API_KEY:
-        print("❌ Error: POLYGON_API_KEY not found in environment variables")
-        print("Please set your Polygon.io API key in the .env file:")
-        print("POLYGON_API_KEY=your_api_key_here")
+    if not ALPHA_VANTAGE_API_KEY:
+        print("❌ Error: ALPHA_VANTAGE_API_KEY not found in environment variables")
+        print("Please set your Alpha Vantage API key in the .env file:")
+        print("ALPHA_VANTAGE_API_KEY=your_api_key_here")
         sys.exit(1)
     
     # Always fetch fresh data since we're using specific date ranges
