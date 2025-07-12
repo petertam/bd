@@ -1,6 +1,8 @@
 # bd
 Billion Dollar Project: correlate news feed with stock SHARP change +/- 3% in one day.
 
+test by peter
+
 
 Executive Summary: This agent help you to make MORE money.
 
